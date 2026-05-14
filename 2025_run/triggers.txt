@@ -1,0 +1,72 @@
+begin experiment:
+
+import python_markers.marker_management as mark
+import python_markers.GS_timing as timing
+
+# Find the marker device. In the current example, a UsbParMarker is used.
+# When the marker device is not found, an error is thrown.
+device_info = mark.find_device(device_type='', fallback_to_fake=False)
+
+# Initialize the marker_manager. Use the device_info obtained previously. In the
+# current example, the task will not crash when a marker error occurs (see
+# example.py for more info).
+cur_device_type = device_info['device']['Device']
+cur_device_address = device_info['com_port']
+marker_manager = mark.MarkerManager(cur_device_type, cur_device_address, crash_on_marker_errors=False)
+
+# Send a short pulse of 255 to check that markers are sent, then reset to 0.
+marker_manager.set_value(255)
+timing.delay(100)
+marker_manager.set_value(0)
+
+
+begin routine:
+""" Set marker value
+
+See example.py in the python-markers repo for more information.
+
+"""
+
+# In the current example, the marker value is set at the beginning of the
+# trial object. The marker value is specified in conditions.xlsx.
+marker_manager.set_value(marker)
+
+
+
+end routine:
+""" Reset marker value
+
+See example.py in the python-markers repo for more information.
+
+"""
+
+# In the current example, the marker value is reset (set to 0) at the end of the
+# trial object.
+marker_manager.set_value(0)
+
+
+
+end experiment:
+""" Wrap up marker_manager
+
+At the end of the experiment, the marker table is saved and the marker 
+device is closed.
+
+See example.py in the python-markers repo for more information.
+
+"""
+
+# Save the marker table. In the current example:
+# - The filename of the marker table is the same as the default data filename, 
+#   appended with '_marker_table'. 
+# - The location of the marker table is the same as the location of the other 
+#   data (in the data folder in the current working directory). 
+# - Additional information is saved in the header of the marker table file, 
+#   namely the participant and experiment name.
+cur_filename =  expInfo['participant'] + '_' + expName + '_' + expInfo['date'] + '_marker_table'
+cur_location = os.getcwd() + '\data'
+cur_more_info = {'participant': expInfo['participant'], 'experiment': expName}
+marker_manager.save_marker_table(cur_filename, cur_location, cur_more_info)
+
+# Close marker device.
+marker_manager.close()
